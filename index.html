@@ -246,6 +246,14 @@
   .btn-sm.outline:hover{border-color:var(--ink);}
   .ed-toolbar{display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:24px;}
   .ed-list{display:flex; flex-direction:column; gap:8px;}
+  .ed-filters{display:flex; flex-wrap:wrap; gap:8px; align-items:center;}
+  .ed-filters .search{flex:1; min-width:200px;}
+  .ed-select{background:var(--bg2); color:var(--ink); border:1.5px solid var(--line); border-radius:10px; padding:9px 12px; font-family:'Space Grotesk',sans-serif; font-size:0.85rem; cursor:pointer; outline:none;}
+  .ed-select:focus{border-color:var(--cyan);}
+  .ed-year{font-family:'Spline Sans Mono',monospace; font-size:0.78rem; color:var(--dim); min-width:60px; text-align:right;}
+  .ed-pager{display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; margin-top:16px;}
+  .ed-pager-info{font-family:'Spline Sans Mono',monospace; font-size:0.78rem; color:var(--dim); padding:0 8px;}
+  .ed-pager .btn-sm[disabled]{opacity:0.35; cursor:not-allowed;}
   .ed-row{display:grid; grid-template-columns:auto 1.2fr 2fr 1fr auto; gap:12px; align-items:center; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:11px 15px;}
   .ed-row .ed-num{font-family:'Spline Sans Mono',monospace; font-size:0.68rem; color:var(--dim);}
   .ed-row strong{font-size:1rem;}
@@ -442,7 +450,7 @@
 </head>
 <body>
 <nav>
-  <div class="brand" onclick="route('home')">GAME<b>·</b>BOX</div>
+  <div class="brand" onclick="brandClick()">GAME<b>·</b>BOX</div>
   <div class="nav-links" id="navLinks"><!-- rempli par JS --></div>
 </nav>
 
@@ -469,7 +477,7 @@
       </div>
       <div class="game-card" style="--accent:var(--cyan); --glow:rgba(34,224,214,0.25)" onclick="route('timeline')">
         <div class="gc-ic">📅</div>
-        <h3>C'est qui qu'est né quand</h3>
+        <h3>Cékikénékan</h3>
         <p>Devinez l'année de naissance d'une célébrité (ou de création d'un personnage). Le plus proche rafle la mise.</p>
         <div class="gc-meta">2+ joueurs · ~5 min</div>
         <div class="gc-play">Jouer →</div>
@@ -587,7 +595,7 @@
 <div class="screen" id="screen-timeline">
   <section>
     <div class="back-link" onclick="route('home')">← retour aux jeux</div>
-    <div class="game-header"><div class="gh-ic">📅</div><div class="gh-title">C'est qui qu'est né quand</div><div class="gh-sub">Devine l'année de naissance ou de création</div></div>
+    <div class="game-header"><div class="gh-ic">📅</div><div class="gh-title">Cékikénékan</div><div class="gh-sub">Devine l'année de naissance ou de création</div></div>
     <div class="subtabs">
       <button class="subtab active" id="tl-tab-play" onclick="tlTab('play')">Jouer</button>
       <button class="subtab" id="tl-tab-rules" onclick="tlTab('rules')">Règles</button>
@@ -742,10 +750,24 @@
         <button class="btn-sm outline" onclick="resetToDefault()">↺ Restaurer la liste de base</button>
         <span class="count-tag" id="edCount"></span>
       </div>
-      <div class="controls-bar">
-        <input class="search" id="search" type="text" placeholder="rechercher pour filtrer la liste éditable…" oninput="renderEditList()">
+      <div class="controls-bar ed-filters">
+        <input class="search" id="search" type="text" placeholder="🔍 rechercher un nom, une description…" oninput="edPage=1;renderEditList()">
+        <select id="edFilterCat" class="ed-select" onchange="edPage=1;renderEditList()"><option value="all">Toutes catégories</option></select>
+        <select id="edFilterYear" class="ed-select" onchange="edPage=1;renderEditList()">
+          <option value="all">Avec ou sans année</option>
+          <option value="dated">Avec année</option>
+          <option value="undated">Sans année</option>
+        </select>
+        <select id="edSort" class="ed-select" onchange="edPage=1;renderEditList()">
+          <option value="default">Ordre d'ajout</option>
+          <option value="az">Nom A→Z</option>
+          <option value="za">Nom Z→A</option>
+          <option value="yearAsc">Année ↑ (ancien)</option>
+          <option value="yearDesc">Année ↓ (récent)</option>
+        </select>
       </div>
       <div class="ed-list" id="edList"></div>
+      <div class="ed-pager" id="edPager"></div>
     </div>
   </section>
 </div>
@@ -1671,107 +1693,133 @@ const DEFAULT_DATA = [
 
 // Paires de mots proches pour Undercover : [motCitoyen, motUndercover]
 const WORD_PAIRS = [
-["Chat","Tigre"],
-["Café","Thé"],
-["Plage","Désert"],
-["Vélo","Moto"],
-["Pizza","Tarte"],
-["Roi","Reine"],
-["Soleil","Lune"],
-["Pomme","Poire"],
-["Train","Métro"],
-["Guitare","Violon"],
-["Neige","Pluie"],
-["Médecin","Infirmier"],
-["Avion","Hélicoptère"],
-["Crayon","Stylo"],
-["Lion","Panthère"],
-["Chocolat","Caramel"],
-["Montagne","Colline"],
-["Bateau","Sous-marin"],
-["Pompier","Policier"],
-["Sucre","Sel"],
-["Été","Printemps"],
-["Livre","Cahier"],
-["Fourchette","Cuillère"],
-["Château","Palais"],
-["Requin","Dauphin"],
-["Vin","Bière"],
-["Fleuve","Rivière"],
-["Acteur","Chanteur"],
-["Lunettes","Loupe"],
-["Pull","Veste"],
-["Cinéma","Théâtre"],
-["Boulanger","Pâtissier"],
-["Fraise","Framboise"],
-["Loup","Renard"],
-["Tour Eiffel","Statue de la Liberté"],
-["Football","Rugby"],
-["Tente","Caravane"],
-["Miel","Confiture"],
-["Piano","Orgue"],
-["Étoile","Planète"],
-["Sandwich","Burger"],
-["Aigle","Faucon"],
-["Forêt","Jungle"],
-["Casque","Chapeau"],
-["Professeur","Élève"],
-["Citron","Orange"],
-["Serpent","Lézard"],
-["Pyramide","Obélisque"],
-["Tennis","Badminton"],
-["Lampe","Bougie"],
-["Yaourt","Fromage"],
-["Voiture","Camion"],
-["Glace","Sorbet"],
-["Cheval","Âne"],
-["Rose","Tulipe"],
-["Ours","Panda"],
-["Île","Presqu'île"],
-["Magicien","Sorcier"],
-["Bus","Tramway"],
-["Crêpe","Gaufre"],
-["Singe","Gorille"],
-["Volcan","Geyser"],
-["Boxe","Karaté"],
-["Parapluie","Parasol"],
-["Pingouin","Manchot"],
-["Coca","Limonade"],
-["Tableau","Fresque"],
-["Tortue","Escargot"],
-["Pont","Tunnel"],
-["Astronaute","Pilote"],
-["Banane","Mangue"],
-["Abeille","Guêpe"],
-["Désert","Savane"],
-["Clavier","Piano"],
-["Pâtes","Riz"],
-["Léopard","Guépard"],
-["Phare","Tour"],
-["Natation","Plongée"],
-["Bracelet","Collier"],
-["Soupe","Bouillon"],
-["Hibou","Chouette"],
-["Cascade","Fontaine"],
-["Jardinier","Fleuriste"],
-["Pêche","Abricot"],
-["Crocodile","Alligator"],
-["Église","Cathédrale"],
-["Ski","Snowboard"],
-["Montre","Horloge"],
-["Beurre","Margarine"],
-["Cerf","Renne"],
-["Grotte","Caverne"],
-["Architecte","Maçon"],
-["Melon","Pastèque"],
-["Moustique","Mouche"],
-["Toundra","Banquise"],
-["Trompette","Saxophone"],
-["Frites","Chips"],
-["Kangourou","Wallaby"],
-["Gratte-ciel","Immeuble"],
-["Golf","Pétanque"],
-["Bague","Alliance"],
+  ["Chat","Tigre"], ["Café","Thé"], ["Plage","Désert"], ["Vélo","Moto"],
+  ["Pizza","Tarte"], ["Roi","Reine"], ["Soleil","Lune"], ["Pomme","Poire"],
+  ["Train","Métro"], ["Guitare","Violon"], ["Neige","Pluie"], ["Médecin","Infirmier"],
+  ["Avion","Hélicoptère"], ["Crayon","Stylo"], ["Lion","Panthère"], ["Chocolat","Caramel"],
+  ["Montagne","Colline"], ["Bateau","Sous-marin"], ["Pompier","Policier"], ["Sucre","Sel"],
+  ["Été","Printemps"], ["Livre","Cahier"], ["Fourchette","Cuillère"], ["Château","Palais"],
+  ["Requin","Dauphin"], ["Vin","Bière"], ["Fleuve","Rivière"], ["Acteur","Chanteur"],
+  ["Lunettes","Loupe"], ["Pull","Veste"], ["Cinéma","Théâtre"], ["Boulanger","Pâtissier"],
+  ["Fraise","Framboise"], ["Loup","Renard"], ["Tour Eiffel","Statue de la Liberté"], ["Football","Rugby"],
+  ["Tente","Caravane"], ["Miel","Confiture"], ["Piano","Orgue"], ["Étoile","Planète"],
+  ["Sandwich","Burger"], ["Aigle","Faucon"], ["Forêt","Jungle"], ["Casque","Chapeau"],
+  ["Professeur","Élève"], ["Citron","Orange"], ["Serpent","Lézard"], ["Pyramide","Obélisque"],
+  ["Tennis","Badminton"], ["Lampe","Bougie"], ["Yaourt","Fromage"], ["Voiture","Camion"],
+  ["Glace","Sorbet"], ["Cheval","Âne"], ["Rose","Tulipe"], ["Ours","Panda"],
+  ["Île","Presqu'île"], ["Magicien","Sorcier"], ["Bus","Tramway"], ["Crêpe","Gaufre"],
+  ["Singe","Gorille"], ["Volcan","Geyser"], ["Boxe","Karaté"], ["Parapluie","Parasol"],
+  ["Pingouin","Manchot"], ["Coca","Limonade"], ["Tableau","Fresque"], ["Tortue","Escargot"],
+  ["Pont","Tunnel"], ["Astronaute","Pilote"], ["Banane","Mangue"], ["Abeille","Guêpe"],
+  ["Désert","Savane"], ["Clavier","Piano"], ["Pâtes","Riz"], ["Léopard","Guépard"],
+  ["Phare","Tour"], ["Natation","Plongée"], ["Bracelet","Collier"], ["Soupe","Bouillon"],
+  ["Hibou","Chouette"], ["Cascade","Fontaine"], ["Jardinier","Fleuriste"], ["Pêche","Abricot"],
+  ["Crocodile","Alligator"], ["Église","Cathédrale"], ["Ski","Snowboard"], ["Montre","Horloge"],
+  ["Beurre","Margarine"], ["Cerf","Renne"], ["Grotte","Caverne"], ["Architecte","Maçon"],
+  ["Melon","Pastèque"], ["Moustique","Mouche"], ["Toundra","Banquise"], ["Trompette","Saxophone"],
+  ["Frites","Chips"], ["Kangourou","Wallaby"], ["Gratte-ciel","Immeuble"], ["Golf","Pétanque"],
+  ["Bague","Alliance"], ["Chien","Loup"], ["Lion","Lionne"], ["Souris","Rat"],
+  ["Lapin","Lièvre"], ["Grenouille","Crapaud"], ["Baleine","Cachalot"], ["Corbeau","Pie"],
+  ["Poule","Canard"], ["Coq","Dindon"], ["Papillon","Libellule"], ["Araignée","Scorpion"],
+  ["Renard","Belette"], ["Cerf","Biche"], ["Sanglier","Cochon"], ["Mouton","Chèvre"],
+  ["Vache","Taureau"], ["Éléphant","Mammouth"], ["Girafe","Zèbre"], ["Hippopotame","Rhinocéros"],
+  ["Pieuvre","Calmar"], ["Crabe","Homard"], ["Méduse","Anémone"], ["Hamster","Cochon d'Inde"],
+  ["Perroquet","Toucan"], ["Flamant","Cigogne"], ["Fourmi","Termite"], ["Orange","Mandarine"],
+  ["Citron","Citron vert"], ["Cerise","Griotte"], ["Banane","Plantain"], ["Raisin","Groseille"],
+  ["Pêche","Nectarine"], ["Abricot","Prune"], ["Ananas","Mangue"], ["Kiwi","Figue"],
+  ["Noix","Noisette"], ["Amande","Cacahuète"], ["Myrtille","Mûre"], ["Soupe","Velouté"],
+  ["Steak","Escalope"], ["Saucisse","Merguez"], ["Jambon","Lardons"], ["Omelette","Quiche"],
+  ["Gâteau","Muffin"], ["Croissant","Pain au chocolat"], ["Baguette","Brioche"], ["Biscuit","Cookie"],
+  ["Bonbon","Chewing-gum"], ["Jus","Limonade"], ["Eau","Soda"], ["Champagne","Cidre"],
+  ["Lait","Crème"], ["Sirop","Grenadine"], ["Smoothie","Milkshake"], ["Whisky","Rhum"],
+  ["Cocktail","Mojito"], ["Bateau","Voilier"], ["Trottinette","Skateboard"], ["Fusée","Navette"],
+  ["Sous-marin","Paquebot"], ["Taxi","Ambulance"], ["Scooter","Quad"], ["Montgolfière","Planeur"],
+  ["Téléphérique","Funiculaire"], ["Kayak","Pédalo"], ["Tracteur","Bulldozer"], ["Lac","Étang"],
+  ["Océan","Mer"], ["Grotte","Tunnel"], ["Cascade","Torrent"], ["Champ","Prairie"],
+  ["Vallée","Canyon"], ["Glacier","Iceberg"], ["Marais","Mangrove"], ["Falaise","Dune"],
+  ["Ville","Village"], ["Maison","Appartement"], ["École","Université"], ["Hôpital","Clinique"],
+  ["Restaurant","Cantine"], ["Hôtel","Auberge"], ["Musée","Galerie"], ["Stade","Arène"],
+  ["Parc","Jardin"], ["Pont","Viaduc"], ["Tour","Gratte-ciel"], ["Marché","Supermarché"],
+  ["Bibliothèque","Librairie"], ["Gare","Aéroport"], ["Usine","Atelier"], ["Ferme","Grange"],
+  ["Phare","Tour de guet"], ["Chaise","Tabouret"], ["Table","Bureau"], ["Canapé","Fauteuil"],
+  ["Lit","Hamac"], ["Armoire","Commode"], ["Miroir","Vitre"], ["Tapis","Moquette"],
+  ["Rideau","Store"], ["Coussin","Oreiller"], ["Couverture","Plaid"], ["Vase","Pot"],
+  ["Cadre","Poster"], ["Étagère","Bibliothèque"], ["Four","Micro-ondes"], ["Frigo","Congélateur"],
+  ["Évier","Lavabo"], ["Douche","Baignoire"], ["Robinet","Pommeau"], ["Balai","Aspirateur"],
+  ["Éponge","Serpillère"], ["Poubelle","Corbeille"], ["Clé","Cadenas"], ["Serrure","Verrou"],
+  ["Couteau","Fourchette"], ["Cuillère","Louche"], ["Assiette","Bol"], ["Verre","Tasse"],
+  ["Casserole","Poêle"], ["Marmite","Cocotte"], ["Saladier","Plat"], ["Théière","Cafetière"],
+  ["Bouilloire","Grille-pain"], ["Râpe","Économe"], ["Pull","Gilet"], ["Chemise","Tee-shirt"],
+  ["Pantalon","Jean"], ["Short","Bermuda"], ["Robe","Jupe"], ["Manteau","Veste"],
+  ["Écharpe","Foulard"], ["Gant","Moufle"], ["Chapeau","Casquette"], ["Bonnet","Béret"],
+  ["Chaussure","Botte"], ["Basket","Sandale"], ["Chaussette","Collant"], ["Cravate","Nœud papillon"],
+  ["Ceinture","Bretelles"], ["Pyjama","Peignoir"], ["Maillot","Slip"], ["Costume","Smoking"],
+  ["Imperméable","Poncho"], ["Doudoune","Anorak"], ["Sac","Valise"], ["Portefeuille","Porte-monnaie"],
+  ["Parapluie","Ombrelle"], ["Montre","Bracelet"], ["Collier","Pendentif"], ["Boucle d'oreille","Piercing"],
+  ["Sac à dos","Cartable"], ["Trousse","Étui"], ["Gomme","Correcteur"], ["Règle","Équerre"],
+  ["Cahier","Classeur"], ["Livre","Magazine"], ["Feuille","Carton"], ["Ciseaux","Cutter"],
+  ["Colle","Scotch"], ["Agrafeuse","Trombone"], ["Tableau","Ardoise"], ["Calculatrice","Boulier"],
+  ["Carte","Plan"], ["Dictionnaire","Encyclopédie"], ["Pinceau","Feutre"], ["Peinture","Crayon de couleur"],
+  ["Téléphone","Tablette"], ["Ordinateur","Console"], ["Télévision","Écran"], ["Clavier","Souris"],
+  ["Casque","Écouteurs"], ["Caméra","Appareil photo"], ["Imprimante","Scanner"], ["Chargeur","Batterie"],
+  ["Enceinte","Haut-parleur"], ["Manette","Joystick"], ["Robot","Drone"], ["Montre connectée","Bracelet sport"],
+  ["Disque dur","Clé USB"], ["Routeur","Modem"], ["Webcam","Micro"], ["Marteau","Massue"],
+  ["Tournevis","Clé à molette"], ["Scie","Hache"], ["Perceuse","Visseuse"], ["Pelle","Pioche"],
+  ["Râteau","Fourche"], ["Échelle","Escabeau"], ["Brouette","Diable"], ["Clou","Vis"],
+  ["Pince","Tenaille"], ["Niveau","Mètre"], ["Truelle","Spatule"], ["Lime","Râpe"],
+  ["Ponceuse","Meuleuse"], ["Sécateur","Cisaille"], ["Basket","Handball"], ["Volley","Beach-volley"],
+  ["Golf","Mini-golf"], ["Patinage","Roller"], ["Judo","Lutte"], ["Course","Marathon"],
+  ["Saut","Triple saut"], ["Escalade","Alpinisme"], ["Surf","Kitesurf"], ["Aviron","Canoë"],
+  ["Cyclisme","VTT"], ["Équitation","Polo"], ["Tir à l'arc","Fléchettes"], ["Escrime","Sabre"],
+  ["Gymnastique","Trampoline"], ["Pétanque","Bowling"], ["Ping-pong","Squash"], ["Hockey","Crosse"],
+  ["Baseball","Cricket"], ["Yoga","Pilates"], ["Cuisinier","Serveur"], ["Professeur","Instituteur"],
+  ["Avocat","Juge"], ["Architecte","Ingénieur"], ["Plombier","Électricien"], ["Menuisier","Charpentier"],
+  ["Peintre","Sculpteur"], ["Pilote","Steward"], ["Marin","Pêcheur"], ["Fermier","Berger"],
+  ["Coiffeur","Barbier"], ["Vétérinaire","Soigneur"], ["Journaliste","Photographe"], ["Acteur","Cascadeur"],
+  ["Chanteur","Danseur"], ["Musicien","Compositeur"], ["Dentiste","Orthodontiste"], ["Pharmacien","Chimiste"],
+  ["Mécanicien","Garagiste"], ["Facteur","Livreur"], ["Caissier","Vendeur"], ["Astronaute","Cosmonaute"],
+  ["Magicien","Mentaliste"], ["Clown","Acrobate"], ["Détective","Espion"], ["Bibliothécaire","Archiviste"],
+  ["Guitare","Banjo"], ["Violon","Alto"], ["Trompette","Cor"], ["Flûte","Clarinette"],
+  ["Batterie","Percussions"], ["Saxophone","Hautbois"], ["Harpe","Cithare"], ["Accordéon","Harmonica"],
+  ["Tambour","Bongo"], ["Violoncelle","Contrebasse"], ["Synthé","Clavier"], ["Ukulélé","Mandoline"],
+  ["Xylophone","Marimba"], ["Cymbale","Gong"], ["Main","Pied"], ["Bras","Jambe"],
+  ["Œil","Oreille"], ["Nez","Bouche"], ["Doigt","Orteil"], ["Cheveux","Barbe"],
+  ["Dent","Langue"], ["Cœur","Poumon"], ["Genou","Coude"], ["Épaule","Hanche"],
+  ["Cerveau","Crâne"], ["Poignet","Cheville"], ["Sourcil","Cil"], ["Lèvre","Joue"],
+  ["Menton","Front"], ["Joie","Bonheur"], ["Peur","Angoisse"], ["Colère","Rage"],
+  ["Tristesse","Mélancolie"], ["Amour","Tendresse"], ["Surprise","Étonnement"], ["Courage","Bravoure"],
+  ["Honte","Gêne"], ["Ennui","Lassitude"], ["Espoir","Optimisme"], ["Jalousie","Envie"],
+  ["Fierté","Vanité"], ["Calme","Sérénité"], ["Stress","Pression"], ["Curiosité","Intérêt"],
+  ["Pluie","Averse"], ["Neige","Grêle"], ["Vent","Brise"], ["Orage","Tempête"],
+  ["Brouillard","Brume"], ["Soleil","Étoile"], ["Lune","Planète"], ["Nuage","Cumulus"],
+  ["Arc-en-ciel","Halo"], ["Foudre","Éclair"], ["Rosée","Givre"], ["Canicule","Sécheresse"],
+  ["Inondation","Crue"], ["Tornade","Ouragan"], ["Aurore","Crépuscule"], ["Échecs","Dames"],
+  ["Cartes","Dominos"], ["Puzzle","Mots croisés"], ["Dé","Toupie"], ["Bille","Toupie"],
+  ["Cerf-volant","Frisbee"], ["Ballon","Bulle"], ["Poupée","Peluche"], ["Lego","Playmobil"],
+  ["Toboggan","Balançoire"], ["Trampoline","Pogo"], ["Yoyo","Diabolo"], ["Kaléidoscope","Jumelles"],
+  ["Tambourin","Maracas"], ["Quilles","Palets"], ["Film","Série"], ["Comédie","Drame"],
+  ["Acteur","Figurant"], ["Scène","Coulisses"], ["Caméra","Projecteur"], ["Affiche","Bande-annonce"],
+  ["Popcorn","Bonbon"], ["Réalisateur","Producteur"], ["Costume","Déguisement"], ["Maquillage","Masque"],
+  ["Terre","Mars"], ["Étoile","Comète"], ["Galaxie","Nébuleuse"], ["Astéroïde","Météorite"],
+  ["Fusée","Satellite"], ["Astronaute","Extraterrestre"], ["Télescope","Lunette"], ["Cratère","Canyon"],
+  ["Orbite","Trajectoire"], ["Pièce","Billet"], ["Banque","Coffre"], ["Carte bancaire","Chèque"],
+  ["Magasin","Boutique"], ["Caddie","Panier"], ["Ticket","Reçu"], ["Solde","Promotion"],
+  ["Facture","Devis"], ["Tirelire","Portefeuille"], ["Marché","Bazar"], ["Anniversaire","Fête"],
+  ["Mariage","Fiançailles"], ["Noël","Nouvel An"], ["Halloween","Carnaval"], ["Cadeau","Surprise"],
+  ["Bougie","Guirlande"], ["Confettis","Serpentin"], ["Feu d'artifice","Pétard"], ["Gâteau","Bûche"],
+  ["Ballon","Banderole"], ["Valise","Sac de voyage"], ["Hôtel","Camping"], ["Plage","Piscine"],
+  ["Maillot","Bouée"], ["Crème solaire","Parasol"], ["Carte postale","Souvenir"], ["Boussole","GPS"],
+  ["Passeport","Billet"], ["Appareil photo","Caméscope"], ["Fleur","Bouquet"], ["Arbre","Buisson"],
+  ["Cactus","Bambou"], ["Herbe","Mousse"], ["Feuille","Pétale"], ["Racine","Tige"],
+  ["Graine","Bourgeon"], ["Champignon","Truffe"], ["Sapin","Cyprès"], ["Tournesol","Marguerite"],
+  ["Lavande","Romarin"], ["Fougère","Lierre"], ["Palmier","Cocotier"], ["Saule","Chêne"],
+  ["Sucré","Salé"], ["Acide","Amer"], ["Épicé","Pimenté"], ["Sel","Poivre"],
+  ["Sucre","Édulcorant"], ["Vinaigre","Huile"], ["Moutarde","Mayonnaise"], ["Ketchup","Sauce"],
+  ["Basilic","Persil"], ["Cannelle","Vanille"], ["Rouge","Rose"], ["Bleu","Turquoise"],
+  ["Vert","Kaki"], ["Jaune","Orange"], ["Violet","Mauve"], ["Noir","Gris"],
+  ["Blanc","Beige"], ["Marron","Bordeaux"], ["Carré","Rectangle"], ["Cercle","Ovale"],
+  ["Triangle","Pyramide"], ["Étoile","Losange"], ["Spirale","Vague"], ["Cube","Sphère"],
+  ["Ligne","Courbe"]
 ];
 
 // Anecdotes par année : un fait marquant ou amusant (PAS de naissances de personnes).
@@ -1987,12 +2035,28 @@ function route(name){
   if(name==="dismot") renderDM();
   if(name==="encadre") renderEN();
 }
+// clic sur le logo : 1 clic = accueil ; 5 clics rapprochés = accès éditeur caché
+let _brandClicks=0, _brandTimer=null;
+function brandClick(){
+  _brandClicks++;
+  clearTimeout(_brandTimer);
+  if(_brandClicks>=5){
+    _brandClicks=0;
+    route('editer');
+    return;
+  }
+  _brandTimer=setTimeout(()=>{
+    // si on n'a pas atteint 5 clics à temps, comportement normal : retour accueil
+    if(_brandClicks<5) route('home');
+    _brandClicks=0;
+  }, 600);
+}
 function buildNav(current){
   const nav=document.getElementById("navLinks");
   let html=`<a class="${current==='home'?'active':''}" onclick="route('home')">Accueil</a>`;
   html+=`<a class="${current==='witg'?'active':''}" onclick="route('witg')">Who Is This Guy</a>`;
   html+=`<a class="${current==='undercover'?'active':''}" onclick="route('undercover')">Undercover</a>`;
-  html+=`<a class="${current==='timeline'?'active':''}" onclick="route('timeline')">C'est qui qu'est né quand</a>`;
+  html+=`<a class="${current==='timeline'?'active':''}" onclick="route('timeline')">Cékikénékan</a>`;
   html+=`<a class="${current==='dismot'?'active':''}" onclick="route('dismot')">Crache le morceau</a>`;
   html+=`<a class="${current==='encadre'?'active':''}" onclick="route('encadre')">Serre la vis</a>`;
   html+=`<a class="${current==='tirage'?'active':''}" onclick="route('tirage')">Tirage</a>`;
@@ -2289,7 +2353,7 @@ function setupHTML(){
 
 
 /* ============ UNDERCOVER ============ */
-const UC_PTS = { undercover:8, mrwhite:12, civil:2, voteMalus:2, guessWord:2 };
+const UC_PTS = { civil:3, guessWord:1 };
 let uc = null;
 
 function ucDefault(){
@@ -2372,6 +2436,7 @@ function ucBuildRoles(n){
   return roles;
 }
 
+function ucShuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
 function ucStartDistribution(){
   ucSaveNames();
   const names=[];
@@ -2379,6 +2444,8 @@ function ucStartDistribution(){
   if(!ucPickWords()){ toast("Pas assez de célébrités proches dans cette catégorie."); return; }
   const roles=ucBuildRoles(names.length);
   uc.players=names.map((name,i)=>{ const role=roles[i]; const word=role==="civ"?uc.civWord:(role==="und"?uc.undWord:""); ucEnsureTotal(name); return {name,role,word,alive:true}; });
+  // ordre aléatoire pour voir les mots ET pour jouer (tout le monde tourne à chaque manche)
+  ucShuffle(uc.players);
   uc.phase="distribute"; uc.distIndex=0; uc.distRevealed=false;
   renderUC();
 }
@@ -2455,7 +2522,7 @@ function ucTieWordRound(){ uc.phase="play"; uc.tieLeaders=null; toast("Refaites 
 
 /* devinette finale par le dernier imposteur démasqué */
 function ucGuessResult(correct){
-  if(correct){ ucEnsureTotal(uc.players[uc.finalImposter].name); uc.totals[uc.players[uc.finalImposter].name]+=UC_PTS.guessWord; toast("+2 pour "+uc.players[uc.finalImposter].name); }
+  if(correct){ toast("+"+UC_PTS.guessWord+" pour "+uc.players[uc.finalImposter].name); }
   ucFinish(uc.lastWinner, uc.players[uc.finalImposter].name, correct);
 }
 
@@ -2482,22 +2549,17 @@ function applyUcScoring(winner, guesserName, guessedRight){
   uc.scoreLog=[];
   uc.players.forEach(p=>ucEnsureTotal(p.name));
   if(winner==="civ"){
+    // les civils qui gagnent marquent +3 chacun
     uc.players.filter(p=>p.role==="civ").forEach(p=>{ uc.totals[p.name]+=UC_PTS.civil; uc.scoreLog.push(`${p.name} (civil) +${UC_PTS.civil}`); });
-    if(guesserName && guessedRight){ uc.scoreLog.push(`${guesserName} a deviné le mot +${UC_PTS.guessWord}`); }
   } else {
-    // imposteurs gagnent — barème + bonus/malus basé sur le DERNIER vote
-    const lastVotes=uc.lastVotes||{};
-    // pour chaque imposteur, qui l'a visé au dernier vote ?
-    uc.players.forEach((p,idx)=>{
-      if(p.role==="civ") return;
-      const base = p.role==="mw" ? UC_PTS.mrwhite : UC_PTS.undercover;
-      // votants ayant ciblé cet imposteur au dernier vote
-      const voters=Object.keys(lastVotes).filter(v=>lastVotes[v]===idx).map(Number);
-      const malus=voters.length*UC_PTS.voteMalus;
-      uc.totals[p.name]+=base-malus;
-      uc.scoreLog.push(`${p.name} (${p.role==="mw"?"Mr White":"undercover"}) +${base}${malus?` −${malus}`:""}`);
-      voters.forEach(vi=>{ uc.totals[uc.players[vi].name]+=UC_PTS.voteMalus; uc.scoreLog.push(`${uc.players[vi].name} +${UC_PTS.voteMalus} (a démasqué ${p.name})`); });
-    });
+    // les imposteurs gagnent : aucun point automatique.
+    uc.scoreLog.push(`Les imposteurs l'emportent — pas de points pour les civils.`);
+  }
+  // bonus : un undercover qui devine le mot des civils marque +1 (peu importe qui gagne)
+  if(guesserName && guessedRight){
+    ucEnsureTotal(guesserName);
+    uc.totals[guesserName]+=UC_PTS.guessWord;
+    uc.scoreLog.push(`${guesserName} a deviné le mot des civils +${UC_PTS.guessWord}`);
   }
 }
 
@@ -2627,7 +2689,7 @@ function ucSetupHTML(){
       <div class="uc-field"><label>Prénoms des joueurs</label><div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">${nameInputs}</div></div>
       <div class="uc-warn">${warn}</div>
       <div class="big-actions"><button class="btn btn-vi btn-xl" ${civ<2?"disabled":""} onclick="ucStartDistribution()">🎭 Distribuer les mots</button></div>
-      <div class="uc-points-legend">Barème : undercover gagnant <b>+8</b> · Mr White gagnant <b>+12</b> · civils gagnants <b>+2</b> chacun · démasquer un imposteur gagnant lui retire <b>2</b> qui vous reviennent · dernier imposteur démasqué qui devine le mot <b>+2</b>.</div>
+      <div class="uc-points-legend">Barème : les civils qui gagnent marquent <b>+3</b> chacun · un undercover démasqué qui devine le mot des civils marque <b>+1</b>.</div>
     </div>`;
 }
 
@@ -2840,6 +2902,8 @@ function ucNextMatch(){
   if(!ucPickWords()){ toast("Pas assez de célébrités proches."); return; }
   const roles=ucBuildRoles(names.length);
   uc.players=names.map((name,i)=>{ const role=roles[i]; const word=role==="civ"?uc.civWord:(role==="und"?uc.undWord:""); return {name,role,word,alive:true}; });
+  // nouvel ordre aléatoire à chaque manche (lecture des mots + jeu)
+  ucShuffle(uc.players);
   uc.votes={}; uc.lastVotes=null; uc.selectedVoter=null; uc.finalImposter=null; uc.scoreLog=[];
   uc.phase="distribute"; uc.distIndex=0; uc.distRevealed=false;
   renderUC();
@@ -3012,7 +3076,6 @@ function tlGuessHTML(){
   const pIdx=tl.order[tl.curGuesser];
   const pName=tl.players[pIdx];
   const label = (tl.secret.c==="pers") ? "année de création" : "année de naissance";
-  let placed=tl.order.slice(0,tl.curGuesser).map(idx=>`${tl.players[idx]} : ${tlFmtYear(tl.guesses[idx])}`).join(" · ");
   return `<div class="game-wrap">
     <div class="session-bar"><span>Manche ${tl.rounds+1} · ${tl.curGuesser+1}/${tl.order.length} joueurs</span><span class="sess-reset" onclick="tl.phase='setup';renderTL()">↺ quitter</span></div>
     <div class="board">
@@ -3024,7 +3087,6 @@ function tlGuessHTML(){
       </div>
       <div class="tl-turn">🎯 Au tour de <b style="color:var(--cyan)">${pName}</b></div>
       ${tl.zoomEra==null ? tlErasHTML() : tlZoomHTML()}
-      ${placed?`<div class="tl-placed">Déjà placé : ${placed}</div>`:""}
       <div class="actions" style="margin-top:10px;">
         ${tl.curGuesser===0 && Object.keys(tl.guesses).length===0 && tl.zoomEra==null?`<button class="btn btn-ghost" onclick="tlSwap()">🤔 Quiccuici? — personne ne la connaît, en tirer une autre</button>`:""}
       </div>
@@ -3627,7 +3689,7 @@ function enSetupHTML(){
   }
   return `<div class="uc-setup">
     ${enScoreboardHTML()?`<div class="session-bar"><span>Scores</span></div>${enScoreboardHTML()}`:""}
-    <div class="uc-field"><label>Nombre de joueurs</label><div class="stepper"><button onclick="enStep(-1)">−</button><div class="val">${en.nbPlayers}</div><button onclick="enStep(1)">+</button></div></div>
+    <div class="uc-field"><label>Nombre de joueurs (seul ou à plusieurs)</label><div class="stepper"><button onclick="enStep(-1)">−</button><div class="val">${en.nbPlayers}</div><button onclick="enStep(1)">+</button></div></div>
     <div class="uc-field"><label>Prénoms</label><div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">${nameInputs}</div></div>
     <div class="big-actions"><button class="btn btn-cy btn-xl" onclick="enStart()">🔤 Tirer un mot mystère</button></div>
     <div class="uc-points-legend">Un mot mystère est caché entre les bornes. Chacun son tour, proposez un mot de la même longueur. Vert = lettre exacte. Points selon le nombre d'essais pour trouver : ≤2 → <b>10</b>, ≤4 → <b>5</b>, ≤6 → <b>4</b>, ≤8 → <b>3</b>, ≤10 → <b>2</b>, au-delà → <b>1</b>.</div>
@@ -3659,7 +3721,7 @@ function enPlayHTML(){
     history+=`<div class="en-guess"><div class="en-guess-by">${gss.by}</div><div class="en-row">${cells}</div></div>`;
   });
   return `<div class="game-wrap"><div class="board">
-    <div class="session-bar"><span>Mot de ${L} lettres · au tour de <b style="color:var(--cyan)">${en.players[en.curPlayer]}</b></span><span class="sess-reset" onclick="en.phase='setup';renderEN()">↺ quitter</span></div>
+    <div class="session-bar"><span>Mot de ${L} lettres${en.players.length>1?` · au tour de <b style="color:var(--cyan)">${en.players[en.curPlayer]}</b>`:""}</span><span class="sess-reset" onclick="en.phase='setup';renderEN()">↺ quitter</span></div>
     ${enScoreboardHTML()}
     <div class="en-frame">
       <div class="en-row en-bound-row">${topRow}</div>
@@ -3793,21 +3855,71 @@ function editPerson(globalIdx){
   c=c.trim(); if(!CATS[c]) c=p.c;
   DATA[globalIdx]={n:n.trim()||p.n,d:d.trim(),c}; refreshAll(); toast("Modifié·e.");
 }
+let edPage=1;
+const ED_PER_PAGE=50;
+function edFillCatFilter(){
+  const sel=document.getElementById("edFilterCat"); if(!sel) return;
+  const cur=sel.value||"all";
+  let opts=`<option value="all">Toutes catégories</option>`;
+  for(const [k,v] of Object.entries(CATS)){ opts+=`<option value="${k}">${v.label}</option>`; }
+  sel.innerHTML=opts;
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+}
 function renderEditList(){
   const list=document.getElementById("edList"); if(!list) return;
+  edFillCatFilter();
   const q=(document.getElementById("search")?.value||"").toLowerCase().trim();
-  const MAX=200;
-  const matched=DATA.map((p,gi)=>({...p,gi})).filter(p=>{
-    if(!q) return true;
-    const cl=(CATS[p.c]||{label:""}).label.toLowerCase();
-    return p.n.toLowerCase().includes(q)||p.d.toLowerCase().includes(q)||cl.includes(q);
+  const fCat=document.getElementById("edFilterCat")?.value||"all";
+  const fYear=document.getElementById("edFilterYear")?.value||"all";
+  const sort=document.getElementById("edSort")?.value||"default";
+
+  let matched=DATA.map((p,gi)=>({...p,gi})).filter(p=>{
+    if(fCat!=="all" && p.c!==fCat) return false;
+    const hasYear=typeof p.y==="number";
+    if(fYear==="dated" && !hasYear) return false;
+    if(fYear==="undated" && hasYear) return false;
+    if(q){
+      const cl=(CATS[p.c]||{label:""}).label.toLowerCase();
+      if(!(p.n.toLowerCase().includes(q)||p.d.toLowerCase().includes(q)||cl.includes(q))) return false;
+    }
+    return true;
   });
-  const shown=matched.slice(0,MAX);
-  list.innerHTML=shown.map(p=>{ const cat=CATS[p.c]||{label:"?",color:"#888"};
-    return `<div class="ed-row"><span class="ed-num">${String(p.gi+1).padStart(3,"0")}</span><strong>${p.n}</strong><span class="ed-d">${p.d}</span><span class="minitag" style="background:${cat.color}">${cat.label}</span><span class="acts"><button class="icon-btn" onclick="editPerson(${p.gi})">modifier</button><button class="icon-btn del" onclick="deletePerson(${p.gi})">suppr.</button></span></div>`;
-  }).join("") + (matched.length>MAX?`<div class="ed-note" style="margin-top:10px;">${matched.length} résultats — affichage des ${MAX} premiers. Affinez la recherche.</div>`:"");
+
+  // tri
+  if(sort==="az") matched.sort((a,b)=>a.n.localeCompare(b.n,'fr'));
+  else if(sort==="za") matched.sort((a,b)=>b.n.localeCompare(a.n,'fr'));
+  else if(sort==="yearAsc") matched.sort((a,b)=>(a.y??99999)-(b.y??99999));
+  else if(sort==="yearDesc") matched.sort((a,b)=>(b.y??-99999)-(a.y??-99999));
+
+  // pagination
+  const total=matched.length;
+  const pages=Math.max(1,Math.ceil(total/ED_PER_PAGE));
+  if(edPage>pages) edPage=pages;
+  const start=(edPage-1)*ED_PER_PAGE;
+  const shown=matched.slice(start,start+ED_PER_PAGE);
+
+  list.innerHTML = shown.length ? shown.map(p=>{ const cat=CATS[p.c]||{label:"?",color:"#888"};
+    const yr = typeof p.y==="number" ? (p.y<0?Math.abs(p.y)+" av. J.-C.":p.y) : "—";
+    return `<div class="ed-row"><span class="ed-num">${String(p.gi+1).padStart(3,"0")}</span><strong>${p.n}</strong><span class="ed-d">${p.d}</span><span class="minitag" style="background:${cat.color}">${cat.label}</span><span class="ed-year">${yr}</span><span class="acts"><button class="icon-btn" onclick="editPerson(${p.gi})">modifier</button><button class="icon-btn del" onclick="deletePerson(${p.gi})">suppr.</button></span></div>`;
+  }).join("") : `<div class="ed-note" style="margin-top:14px; text-align:center;">Aucun résultat pour ces filtres.</div>`;
+
+  // barre de pagination
+  const pager=document.getElementById("edPager");
+  if(pager){
+    if(total<=ED_PER_PAGE){ pager.innerHTML=`<div class="ed-pager-info">${total} résultat${total>1?"s":""}</div>`; }
+    else{
+      const from=start+1, to=Math.min(start+ED_PER_PAGE,total);
+      pager.innerHTML=`
+        <button class="btn-sm outline" ${edPage<=1?"disabled":""} onclick="edGoPage(1)">«</button>
+        <button class="btn-sm outline" ${edPage<=1?"disabled":""} onclick="edGoPage(${edPage-1})">‹ Précédent</button>
+        <span class="ed-pager-info">${from}–${to} sur ${total} · page ${edPage}/${pages}</span>
+        <button class="btn-sm outline" ${edPage>=pages?"disabled":""} onclick="edGoPage(${edPage+1})">Suivant ›</button>
+        <button class="btn-sm outline" ${edPage>=pages?"disabled":""} onclick="edGoPage(${pages})">»</button>`;
+    }
+  }
   const ec=document.getElementById("edCount"); if(ec) ec.textContent=DATA.length+" célébrités · "+Object.keys(CATS).length+" catégories";
 }
+function edGoPage(p){ edPage=p; renderEditList(); const el=document.getElementById("edList"); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); }
 function exportData(){
   const blob=new Blob([JSON.stringify({cats:CATS,data:DATA},null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob); const a=document.createElement("a");
