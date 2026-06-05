@@ -2353,7 +2353,7 @@ function setupHTML(){
 
 
 /* ============ UNDERCOVER ============ */
-const UC_PTS = { civil:3, guessWord:1 };
+const UC_PTS = { civil:3, guessWord:1, undercover:8, demask:2 };
 let uc = null;
 
 function ucDefault(){
@@ -2552,8 +2552,20 @@ function applyUcScoring(winner, guesserName, guessedRight){
     // les civils qui gagnent marquent +3 chacun
     uc.players.filter(p=>p.role==="civ").forEach(p=>{ uc.totals[p.name]+=UC_PTS.civil; uc.scoreLog.push(`${p.name} (civil) +${UC_PTS.civil}`); });
   } else {
-    // les imposteurs gagnent : aucun point automatique.
-    uc.scoreLog.push(`Les imposteurs l'emportent — pas de points pour les civils.`);
+    // les imposteurs gagnent : +8 chacun, -2 par citoyen qui l'a démasqué au dernier vote
+    const lastVotes=uc.lastVotes||{};
+    uc.players.forEach((p,idx)=>{
+      if(p.role==="civ") return;
+      // base +8 pour les undercover (les Mr White comptent aussi comme imposteurs gagnants)
+      uc.totals[p.name]+=UC_PTS.undercover;
+      // citoyens ayant ciblé cet imposteur au dernier vote
+      const voters=Object.keys(lastVotes).filter(v=>lastVotes[v]===idx).map(Number)
+        .filter(vi=>uc.players[vi] && uc.players[vi].role==="civ");
+      const malus=voters.length*UC_PTS.demask;
+      uc.totals[p.name]-=malus;
+      uc.scoreLog.push(`${p.name} (imposteur) +${UC_PTS.undercover}${malus?` −${malus}`:""}`);
+      voters.forEach(vi=>{ uc.totals[uc.players[vi].name]+=UC_PTS.demask; uc.scoreLog.push(`${uc.players[vi].name} +${UC_PTS.demask} (a démasqué ${p.name})`); });
+    });
   }
   // bonus : un undercover qui devine le mot des civils marque +1 (peu importe qui gagne)
   if(guesserName && guessedRight){
@@ -2689,7 +2701,7 @@ function ucSetupHTML(){
       <div class="uc-field"><label>Prénoms des joueurs</label><div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">${nameInputs}</div></div>
       <div class="uc-warn">${warn}</div>
       <div class="big-actions"><button class="btn btn-vi btn-xl" ${civ<2?"disabled":""} onclick="ucStartDistribution()">🎭 Distribuer les mots</button></div>
-      <div class="uc-points-legend">Barème : les civils qui gagnent marquent <b>+3</b> chacun · un undercover démasqué qui devine le mot des civils marque <b>+1</b>.</div>
+      <div class="uc-points-legend">Barème : civils gagnants <b>+3</b> chacun · undercover gagnant <b>+8</b> · mais s'il gagne en ayant été démasqué, il perd <b>2</b> par citoyen qui l'a visé, et ces citoyens gagnent <b>+2</b> · undercover qui devine le mot des civils <b>+1</b>.</div>
     </div>`;
 }
 
@@ -2860,10 +2872,10 @@ function ucGuessHTML(){
   return `<div class="uc-result">
     <div class="handoff-ic">🎯</div>
     <div class="uc-result-title" style="font-size:1.8rem;">${imp.name} démasqué !</div>
-    <p style="color:var(--dim);">C'était le dernier imposteur (${imp.role==="mw"?"Mr White 🟣":"Undercover 🔴"}). Dernière chance : <b style="color:var(--ink)">${imp.name}</b> peut tenter de deviner le mot des citoyens pour grappiller +2 points.</p>
+    <p style="color:var(--dim);">C'était le dernier imposteur (${imp.role==="mw"?"Mr White 🟣":"Undercover 🔴"}). Dernière chance : <b style="color:var(--ink)">${imp.name}</b> peut tenter de deviner le mot des citoyens pour grappiller +${UC_PTS.guessWord} point.</p>
     <p style="margin-top:10px; color:var(--dim); font-size:0.85rem;">Faites deviner à voix haute, puis validez selon sa réponse.</p>
     <div class="big-actions">
-      <button class="btn btn-cy btn-xl" onclick="ucGuessResult(true)">✓ ${imp.name} a deviné le mot (+2)</button>
+      <button class="btn btn-cy btn-xl" onclick="ucGuessResult(true)">✓ ${imp.name} a deviné le mot (+${UC_PTS.guessWord})</button>
       <button class="btn btn-ghost" onclick="ucGuessResult(false)">✗ Raté / passe</button>
     </div>
   </div>`;
